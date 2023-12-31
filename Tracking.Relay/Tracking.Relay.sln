@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33403.182
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tracking.Relay", "Tracking.Relay\Tracking.Relay.csproj", "{44A3F98B-D9D7-4A63-90AF-35BF6AF0781B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{44A3F98B-D9D7-4A63-90AF-35BF6AF0781B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{44A3F98B-D9D7-4A63-90AF-35BF6AF0781B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{44A3F98B-D9D7-4A63-90AF-35BF6AF0781B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{44A3F98B-D9D7-4A63-90AF-35BF6AF0781B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {4C640790-4924-4E54-86E3-B4EFE0F1EC0D}
+	EndGlobalSection
+EndGlobal
