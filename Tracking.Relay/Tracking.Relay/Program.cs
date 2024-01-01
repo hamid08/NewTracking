@@ -1,10 +1,11 @@
 ﻿using MassTransit;
 using MassTransit.Transports;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using RabbitMQ.Client;
 using Tracking.Relay;
-
+using Tracking.Relay.Events;
 
 var host = Host.CreateDefaultBuilder(args)
 
@@ -12,54 +13,33 @@ var host = Host.CreateDefaultBuilder(args)
                {
                    services.AddMassTransit(x =>
                    {
-                       x.UsingRabbitMq((context, cfg) =>
+                       x.UsingRabbitMq((ctx, cfg) =>
                        {
-                           cfg.Host("localhost", "/", h =>
-                           {
-                               h.Username("guest");
-                               h.Password("guest");
-                               //h.UseSsl(s =>
-                               //{
-                               //    s.Protocol = System.Security.Authentication.SslProtocols.Tls12;
-                               //});
-                           });
-
-                           // Remove default wrapper message
-                           cfg.ClearSerialization();
-                           cfg.UseRawJsonSerializer();
-
-                           // Set exchange name
-                           cfg.Message<TrackingData>(top =>
-                           {
-                               top.SetEntityName("Tracking.Relay:TrackingData");
-                           });
-
-
-                           // Configurations per Publish
-                           cfg.Publish<TrackingData>(top =>
-                           {
-                               top.ExchangeType = ExchangeType.Topic;
-                               top.Durable = true;
-                               top.BindQueue("Tracking.Relay:TrackingData", "Tracking.Relay.TrackingData", bind =>
-                               {
-                                   bind.Durable = true;
-                                   bind.ExchangeType = ExchangeType.Topic;
-                                   bind.SetQuorumQueue();
-                                   //bind.SetQueueArgument("x-expires", 300000); // The queue will expire and be deleted after 300000 milliseconds (5 minutes)
-                                 //  bind.SetQueueArgument("x-queue-mode", "lazy"); // For Save in Hard
-                               });
-                           });
-
-
-
-                           cfg.ConfigureEndpoints(context);
+                           cfg.Host("amqp://guest:guest@localhost:5672");
                        });
                    });
 
+
+                   // OPTIONAL, but can be used to configure the bus options
+                   services.AddOptions<MassTransitHostOptions>()
+                       .Configure(options =>
+                       {
+                           // if specified, waits until the bus is started before
+                           // returning from IHostedService.StartAsync
+                           // default is false
+                           options.WaitUntilStarted = true;
+
+                           // if specified, limits the wait time when starting the bus
+                           options.StartTimeout = TimeSpan.FromSeconds(10);
+
+                           // if specified, limits the wait time when stopping the bus
+                           options.StopTimeout = TimeSpan.FromSeconds(30);
+                       });
+
                    services.AddHostedService<Worker>();
+
                })
                .Build();
-
 
 await host.RunAsync();
 
@@ -68,28 +48,31 @@ await host.RunAsync();
 
 public class Worker : BackgroundService
 {
-    private readonly IPublishEndpoint _publishEndpoint;
+    private readonly IBus _bus;
 
-    public Worker(IPublishEndpoint publishEndpoint)
+    public Worker(IBus bus)
     {
-        _publishEndpoint = publishEndpoint;
+        _bus = bus;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            await _publishEndpoint.Publish<TrackingData>(new TrackingData
+            await _bus.Publish(new AddTrackingDataEvent
             {
-              IMEI = Guid.NewGuid().ToString(),
-              Lat = new Random().Next(15),
-              Long = new Random().Next(15),
+                IMEI = Guid.NewGuid().ToString(),
+                Lat = new Random().Next(15),
+                Long = new Random().Next(15),
+                Alt = new Random().Next(15),
+                Speed = new Random().Next(3),
+
 
             });
 
             Console.WriteLine("Message published to the queue.");
 
-            //await Task.Delay(1000, stoppingToken);
+            await Task.Delay(1000, stoppingToken);
         }
     }
 }
